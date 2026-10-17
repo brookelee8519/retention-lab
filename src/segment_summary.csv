@@ -1,0 +1,5 @@
+segment,n_customers,avg_tenure,avg_monthly_charges,avg_total_charges,avg_churn_risk,label
+0,1703,10.2,31.8,302.2,0.4,New low-spend
+1,1904,59.5,93.3,5548.7,0.3,Loyal high-value
+2,2276,15.4,80.8,1251.2,0.7,New high-value (at-risk)
+3,1160,53.6,34.9,1835.6,0.1,Loyal low-spend
