@@ -70,7 +70,7 @@ Python, pandas, scikit-learn, scipy, Streamlit
 ## Running it
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/brookelee8519/retention-lab.git
 cd retention-lab
 pip install -r requirements.txt
 
