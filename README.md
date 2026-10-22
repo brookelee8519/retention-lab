@@ -73,17 +73,18 @@ Python, pandas, scikit-learn, scipy, Streamlit
 git clone https://github.com/brookelee8519/retention-lab.git
 cd retention-lab
 pip install -r requirements.txt
-
-# run these once, in order, to generate the model + results the app reads
-python src/train_churn_model.py
-python src/ab_test.py
-python src/segmentation.py
-
 streamlit run app/app.py
 ```
 
-Needs the Telco Customer Churn CSV in `data/telco_churn.csv`, grab it from
-Kaggle (search "Telco Customer Churn") or IBM's sample datasets.
+The dataset (`data/telco_churn.csv`) and trained model files (`src/*.joblib`) are included, so this runs immediately — no downloads or retraining needed.
+
+If you want to regenerate everything from scratch (e.g. after changing the model or data), run the pipeline scripts in order first:
+```bash
+python3 src/prepare_data.py
+python3 src/train_churn_model.py
+python3 src/segmentation.py
+python3 src/ab_test.py
+```
 
 ## Stuff that's not perfect / what I'd fix with more time
 - the A/B test is simulated, so the effect size is something I chose to be
