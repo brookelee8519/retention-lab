@@ -4,3 +4,6 @@ __pycache__/
 .DS_Store
 venv/
 .venv/
+.DS_Store
+__pycache__/
+*.pyc
