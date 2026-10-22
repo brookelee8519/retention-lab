@@ -5,7 +5,7 @@ on the IBM Telco Customer Churn dataset. Basically pretending to be a data
 scientist at a subscription company trying to figure out who's about to
 leave and whether it's worth paying to keep them.
 
-[screenshot of the app goes here]
+   ![Retention Lab app screenshot](screenshot_retention-lab.png)
 
 ## What it does
 
