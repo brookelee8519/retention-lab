@@ -16,15 +16,10 @@ df_feat, feature_cols = build_features(df)
 rf = joblib.load("src/churn_model.joblib")
 df_feat["churn_risk"] = rf.predict_proba(df_feat[feature_cols])[:, 1]
 
-# Segment on value + usage signals, not on churn risk itself: clustering on
-# the same thing you're about to make decisions with just reproduces the
-# model. tenure + MonthlyCharges + TotalCharges capture "how much is this
-# customer worth and how long have they been around".
 seg_features = df_feat[["tenure", "MonthlyCharges", "TotalCharges"]]
 scaler = StandardScaler()
 seg_scaled = scaler.fit_transform(seg_features)
 
-# pick k via a quick elbow check
 inertias = []
 for k in range(2, 8):
     km = KMeans(n_clusters=k, random_state=42, n_init=10)
@@ -44,9 +39,6 @@ summary = df_feat.groupby("segment").agg(
     avg_churn_risk=("churn_risk", "mean"),
 ).round(1)
 
-# label segments by what they actually are, not just a cluster number.
-# Thresholds are set relative to the segment-level medians (checked by hand
-# against the printed summary) rather than guessed in the abstract.
 median_tenure = summary["avg_tenure"].median()
 median_spend = summary["avg_monthly_charges"].median()
 
@@ -65,7 +57,6 @@ summary["label"] = summary.apply(label_segment, axis=1)
 print("\nsegment summary:")
 print(summary)
 
-# business takeaway: which segment should the retention offer actually target
 summary_sorted = summary.sort_values("avg_churn_risk", ascending=False)
 top_segment = summary_sorted.iloc[0]
 print(f"\nhighest-risk segment: '{top_segment['label']}' "
