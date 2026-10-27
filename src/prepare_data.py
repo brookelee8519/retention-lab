@@ -6,8 +6,6 @@ import pandas as pd
 def load_clean_data(path="data/telco_churn.csv"):
     df = pd.read_csv(path)
 
-    # A handful of brand-new customers (tenure=0) have blank TotalCharges.
-    # That's just "hasn't been billed yet", not missing data, so it's 0.
     df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
     df["TotalCharges"] = df["TotalCharges"].fillna(0)
 
@@ -26,7 +24,6 @@ def build_features(df):
 
     df["gender"] = (df["gender"] == "Male").astype(int)
 
-    # multi-category columns -> one-hot
     cat_cols = [
         "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup",
         "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies",
