@@ -24,26 +24,14 @@ rf = joblib.load("src/churn_model.joblib")
 
 df_feat["churn_risk"] = rf.predict_proba(df_feat[feature_cols])[:, 1]
 
-# Target the high-risk pool. The model's 0.35 threshold (used earlier for
-# catching churners with high recall) flags over half the customer base,
-# too broad to realistically run a discount campaign against. For targeting,
-# use the top quartile of churn risk instead: a company can usually afford
-# to offer a retention discount to its riskiest ~25%, not its riskiest 50%.
 targeting_threshold = df_feat["churn_risk"].quantile(0.75)
 high_risk = df_feat[df_feat["churn_risk"] >= targeting_threshold].copy()
 print(f"targeting threshold (75th pct of churn risk): {targeting_threshold:.3f}")
 print("high-risk pool size:", len(high_risk), f"({len(high_risk)/len(df_feat):.1%} of customers)")
 
-# randomly assign half to get a retention offer (treatment), half get nothing (control)
 high_risk["group"] = np.random.choice(["treatment", "control"], size=len(high_risk), p=[0.5, 0.5])
 print(high_risk["group"].value_counts())
 
-# Simulate outcomes. Baseline retention odds come from the actual churn risk
-# score, then we apply a realistic treatment effect: retention offers in
-# telco typically reduce churn by something like 20-30% relative, not 90%.
-# The goal is a believable effect size, then testing whether a ~1,000
-# customer sample is big enough to detect it, not rigging a result that
-# obviously "proves" the offer works.
 RELATIVE_CHURN_REDUCTION = 0.25
 
 def simulate_retained(row):
@@ -67,7 +55,6 @@ print(f"\nretention rate, treatment (got offer): {retention_t:.3f}")
 print(f"retention rate, control (no offer):    {retention_c:.3f}")
 print(f"absolute lift: {retention_t - retention_c:+.3f}")
 
-# Two-proportion z-test
 n_t, n_c = len(treatment), len(control)
 x_t, x_c = treatment["retained"].sum(), control["retained"].sum()
 
@@ -80,12 +67,10 @@ print(f"\nz-statistic: {z:.3f}")
 print(f"p-value: {p_value:.4f}")
 print("statistically significant at alpha=0.05:", p_value < 0.05)
 
-# 95% CI on the difference in proportions
 diff = retention_t - retention_c
 ci_margin = 1.96 * se
 print(f"95% CI on lift: [{diff - ci_margin:.3f}, {diff + ci_margin:.3f}]")
 
-# chi-square test as a cross-check (should agree with the z-test)
 contingency = pd.DataFrame({
     "retained": [x_t, x_c],
     "churned": [n_t - x_t, n_c - x_c],

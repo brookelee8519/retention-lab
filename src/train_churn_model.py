@@ -14,6 +14,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
     classification_report, roc_auc_score, confusion_matrix, recall_score, precision_score
@@ -50,36 +51,48 @@ print("\n=== Logistic Regression ===")
 print(classification_report(y_test, logreg_pred, target_names=["stay", "churn"]))
 print("ROC-AUC:", round(roc_auc_score(y_test, logreg_proba), 3))
 
-# ---- Model 2: Random Forest, class_weight balanced for recall on churn ----
 rf = RandomForestClassifier(
     n_estimators=300, max_depth=8, min_samples_leaf=20,
     class_weight="balanced", random_state=42, n_jobs=-1
 )
 rf.fit(X_train, y_train)
 rf_pred = rf.predict(X_test)
-rf_proba = rf.predict_proba(X_test)[:, 1]
+rf_proba_raw = rf.predict_proba(X_test)[:, 1]
 
 print("\n=== Random Forest (class_weight=balanced) ===")
 print(classification_report(y_test, rf_pred, target_names=["stay", "churn"]))
-print("ROC-AUC:", round(roc_auc_score(y_test, rf_proba), 3))
+print("ROC-AUC:", round(roc_auc_score(y_test, rf_proba_raw), 3))
+print("avg predicted churn:", round(rf_proba_raw.mean(), 3),
+      "| actual churn rate:", round(y_test.mean(), 3))
 
-# Also show what happens with a lowered decision threshold, since the
-# business cares more about recall than the default 0.5 cutoff gives us
-threshold = 0.35
+model = CalibratedClassifierCV(
+    RandomForestClassifier(
+        n_estimators=300, max_depth=8, min_samples_leaf=20,
+        class_weight="balanced", random_state=42, n_jobs=-1
+    ),
+    method="isotonic", cv=5,
+)
+model.fit(X_train, y_train)
+rf_proba = model.predict_proba(X_test)[:, 1]
+
+print("\n=== Calibrated Random Forest ===")
+print("ROC-AUC:", round(roc_auc_score(y_test, rf_proba), 3))
+print("avg predicted churn:", round(rf_proba.mean(), 3),
+      "| actual churn rate:", round(y_test.mean(), 3))
+
+threshold = 0.12
 rf_pred_lowthresh = (rf_proba >= threshold).astype(int)
-print(f"\n=== Random Forest @ threshold={threshold} (recall-optimized) ===")
+print(f"\n=== Calibrated Random Forest @ threshold={threshold} (recall-optimized) ===")
 print(classification_report(y_test, rf_pred_lowthresh, target_names=["stay", "churn"]))
 print("recall:", round(recall_score(y_test, rf_pred_lowthresh), 3))
 print("precision:", round(precision_score(y_test, rf_pred_lowthresh), 3))
 
-# ---- Feature importance ----
 importances = pd.Series(rf.feature_importances_, index=feature_cols).sort_values(ascending=False)
 print("\ntop 10 features driving churn risk:")
 print(importances.head(10).round(3))
 
-# ---- Save artifacts for the Streamlit app ----
-joblib.dump(rf, "src/churn_model.joblib")
+joblib.dump(model, "src/churn_model.joblib")
 joblib.dump(feature_cols, "src/feature_cols.joblib")
 joblib.dump(threshold, "src/decision_threshold.joblib")
 importances.to_csv("src/feature_importance.csv")
-print("\nsaved model + feature list + importances to src/")
+print("\nsaved calibrated model + feature list + importances to src/")

@@ -1,10 +1,10 @@
 ,0
-high_risk_pool_size,1761
-n_treatment,873
-n_control,888
-retention_treatment,0.4227
-retention_control,0.2151
-lift,0.2076
-z_stat,9.3527
+high_risk_pool_size,1763
+n_treatment,874
+n_control,889
+retention_treatment,0.5149
+retention_control,0.3723
+lift,0.1425
+z_stat,6.0243
 p_value,0.0
 significant,True
